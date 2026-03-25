@@ -74,7 +74,7 @@ export default function AddSubtopicScreen() {
         <TextInput
           style={styles.input}
           placeholder="Например: Present Perfect"
-          placeholderTextColor={Colors.textLight}
+          placeholderTextColor={Colors.textMuted}
           value={title}
           onChangeText={setTitle}
           autoFocus

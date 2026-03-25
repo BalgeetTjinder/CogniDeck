@@ -11,7 +11,7 @@ interface EmptyStateProps {
 export function EmptyState({ icon, title, subtitle }: EmptyStateProps) {
   return (
     <View style={styles.container}>
-      <Ionicons name={icon} size={64} color={Colors.borderLight} />
+      <Ionicons name={icon} size={64} color={Colors.surfaceLight} />
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.subtitle}>{subtitle}</Text>
     </View>
@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
-    color: Colors.textLight,
+    color: Colors.textMuted,
     textAlign: 'center',
     lineHeight: 20,
   },

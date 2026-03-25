@@ -94,7 +94,7 @@ export default function AddCardScreen() {
         <TextInput
           style={[styles.input, styles.inputMultiline]}
           placeholder="Что нужно вспомнить?"
-          placeholderTextColor={Colors.textLight}
+          placeholderTextColor={Colors.textMuted}
           value={question}
           onChangeText={setQuestion}
           multiline
@@ -105,7 +105,7 @@ export default function AddCardScreen() {
         <TextInput
           style={[styles.input, styles.inputMultiline]}
           placeholder="Правильный ответ"
-          placeholderTextColor={Colors.textLight}
+          placeholderTextColor={Colors.textMuted}
           value={answer}
           onChangeText={setAnswer}
           multiline
@@ -116,7 +116,7 @@ export default function AddCardScreen() {
         <TextInput
           style={styles.input}
           placeholder="Подсказка при затруднении"
-          placeholderTextColor={Colors.textLight}
+          placeholderTextColor={Colors.textMuted}
           value={hint}
           onChangeText={setHint}
         />

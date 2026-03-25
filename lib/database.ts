@@ -1,6 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 import { todayString } from './sm2';
-import type { Card, Deck, DeckWithStats, Topic, TopicWithStats, Subtopic, SubtopicWithStats } from './types';
+import type { Card, Deck, DeckWithStats, Topic, TopicWithStats, Subtopic, SubtopicWithStats, ReviewRecord, DayActivity } from './types';
 
 let db: SQLite.SQLiteDatabase | null = null;
 
@@ -53,10 +53,20 @@ async function initializeDatabase(database: SQLite.SQLiteDatabase) {
       FOREIGN KEY (subtopic_id) REFERENCES subtopics(id) ON DELETE CASCADE
     );
 
+    CREATE TABLE IF NOT EXISTS review_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      card_id INTEGER NOT NULL,
+      rating INTEGER NOT NULL,
+      reviewed_at TEXT NOT NULL DEFAULT (date('now')),
+      FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
+    );
+
     CREATE INDEX IF NOT EXISTS idx_cards_next_review ON cards(next_review);
     CREATE INDEX IF NOT EXISTS idx_cards_subtopic ON cards(subtopic_id);
     CREATE INDEX IF NOT EXISTS idx_topics_deck ON topics(deck_id);
     CREATE INDEX IF NOT EXISTS idx_subtopics_topic ON subtopics(topic_id);
+    CREATE INDEX IF NOT EXISTS idx_review_history_date ON review_history(reviewed_at);
+    CREATE INDEX IF NOT EXISTS idx_review_history_card ON review_history(card_id);
   `);
 }
 
@@ -268,4 +278,97 @@ export async function updateCardReview(
 export async function deleteCard(id: number): Promise<void> {
   const database = await getDatabase();
   await database.runAsync('DELETE FROM cards WHERE id = ?', [id]);
+}
+
+// ── Review History ──
+
+export async function logReview(cardId: number, rating: number): Promise<void> {
+  const database = await getDatabase();
+  await database.runAsync(
+    'INSERT INTO review_history (card_id, rating) VALUES (?, ?)',
+    [cardId, rating]
+  );
+}
+
+export async function getStreak(): Promise<number> {
+  const database = await getDatabase();
+  const rows = await database.getAllAsync<{ day: string }>(
+    'SELECT DISTINCT reviewed_at as day FROM review_history ORDER BY reviewed_at DESC'
+  );
+
+  if (rows.length === 0) return 0;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStr = today.toISOString().split('T')[0];
+
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+
+  // Streak must start from today or yesterday (if today not yet studied)
+  if (rows[0].day !== todayStr && rows[0].day !== yesterdayStr) return 0;
+
+  let streak = 0;
+  let cursor = new Date(rows[0].day);
+  cursor.setHours(0, 0, 0, 0);
+
+  for (const row of rows) {
+    const rowDate = new Date(row.day);
+    rowDate.setHours(0, 0, 0, 0);
+    const diff = Math.round((cursor.getTime() - rowDate.getTime()) / 86400000);
+
+    if (diff === 0) {
+      streak++;
+    } else if (diff === 1) {
+      streak++;
+      cursor = rowDate;
+    } else {
+      break;
+    }
+  }
+
+  return streak;
+}
+
+export async function getDayActivity(days: number): Promise<DayActivity[]> {
+  const database = await getDatabase();
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+  const sinceStr = since.toISOString().split('T')[0];
+
+  return database.getAllAsync<DayActivity>(`
+    SELECT reviewed_at as date, COUNT(*) as count
+    FROM review_history
+    WHERE reviewed_at >= ?
+    GROUP BY reviewed_at
+    ORDER BY reviewed_at ASC
+  `, [sinceStr]);
+}
+
+export async function getCardDistribution(): Promise<{ status: string; count: number }[]> {
+  const database = await getDatabase();
+  return database.getAllAsync<{ status: string; count: number }>(`
+    SELECT status, COUNT(*) as count
+    FROM cards
+    GROUP BY status
+    ORDER BY
+      CASE status
+        WHEN 'new' THEN 1
+        WHEN 'learning' THEN 2
+        WHEN 'reviewing' THEN 3
+        WHEN 'mastered' THEN 4
+        WHEN 'archived' THEN 5
+      END
+  `);
+}
+
+export async function getTotalReviewsToday(): Promise<number> {
+  const database = await getDatabase();
+  const today = todayString();
+  const row = await database.getFirstAsync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM review_history WHERE reviewed_at = ?',
+    [today]
+  );
+  return row?.count ?? 0;
 }

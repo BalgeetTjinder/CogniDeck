@@ -30,24 +30,6 @@ export default function HomeScreen() {
     }, [loadDecks])
   );
 
-  const handleDelete = (deck: DeckWithStats) => {
-    Alert.alert(
-      'Удалить колоду?',
-      `"${deck.title}" и все карточки внутри будут удалены.`,
-      [
-        { text: 'Отмена', style: 'cancel' },
-        {
-          text: 'Удалить',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteDeck(deck.id);
-            loadDecks();
-          },
-        },
-      ]
-    );
-  };
-
   return (
     <View style={styles.container}>
       <FlatList
@@ -105,8 +87,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
   },
 });

@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../../lib/colors';
 import { Deck, TopicWithStats } from '../../../lib/types';
 import { getDeck, getTopicsWithStats, deleteTopic, getDueCards } from '../../../lib/database';
+import { KnowledgeGraph } from '../../../components/KnowledgeGraph';
 import { TopicItem } from '../../../components/TopicItem';
 import { EmptyState } from '../../../components/EmptyState';
 
@@ -57,55 +58,78 @@ export default function DeckScreen() {
 
   return (
     <View style={styles.container}>
-      <Stack.Screen options={{ title: deck.title }} />
+      <Stack.Screen
+        options={{
+          title: deck.title,
+          headerStyle: { backgroundColor: Colors.background },
+          headerTintColor: Colors.text,
+        }}
+      />
 
       <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Action bar */}
-        <View style={styles.actionBar}>
-          {totalDue > 0 && (
-            <Pressable
-              style={[styles.studyAllBtn, { backgroundColor: deck.color }]}
-              onPress={() => router.push(`/study/${deckId}`)}
-            >
-              <Ionicons name="play" size={18} color="#fff" />
-              <Text style={styles.studyAllText}>Учить все ({totalDue})</Text>
-            </Pressable>
-          )}
+        {/* Hero graph */}
+        {topics.length > 0 && (
+          <View style={styles.heroSection}>
+            <KnowledgeGraph
+              topics={topics}
+              deckColor={deck.color}
+              onStudyTopic={(topicId) => router.push(`/study/${deckId}?topicId=${topicId}`)}
+              compact
+            />
+          </View>
+        )}
+
+        {/* Study CTA */}
+        {totalDue > 0 && (
           <Pressable
-            style={styles.iconBtn}
-            onPress={() => router.push(`/deck/${deckId}/edit`)}
+            style={[styles.studyCTA, { backgroundColor: deck.color }]}
+            onPress={() => router.push(`/study/${deckId}`)}
           >
-            <Ionicons name="settings-outline" size={20} color={Colors.textSecondary} />
+            <View style={styles.studyCTALeft}>
+              <Ionicons name="play-circle" size={28} color="#fff" />
+              <View>
+                <Text style={styles.studyCTATitle}>Начать сессию</Text>
+                <Text style={styles.studyCTACount}>{totalDue} карточек на сегодня</Text>
+              </View>
+            </View>
+            <Ionicons name="arrow-forward" size={20} color="rgba(255,255,255,0.7)" />
           </Pressable>
-        </View>
+        )}
 
         {/* Quick actions */}
-        <View style={styles.quickActions}>
+        <View style={styles.actions}>
           <Pressable
-            style={styles.quickBtn}
+            style={styles.actionBtn}
             onPress={() => router.push(`/deck/${deckId}/add-topic`)}
           >
-            <Ionicons name="folder-open-outline" size={18} color={Colors.primary} />
-            <Text style={styles.quickBtnText}>Тема</Text>
+            <Ionicons name="folder-open-outline" size={20} color={Colors.primary} />
+            <Text style={styles.actionText}>Тема</Text>
           </Pressable>
           <Pressable
-            style={styles.quickBtn}
+            style={styles.actionBtn}
             onPress={() => router.push(`/deck/${deckId}/add-subtopic`)}
           >
-            <Ionicons name="bookmark-outline" size={18} color={Colors.primary} />
-            <Text style={styles.quickBtnText}>Подтема</Text>
+            <Ionicons name="bookmark-outline" size={20} color={Colors.primary} />
+            <Text style={styles.actionText}>Подтема</Text>
           </Pressable>
           <Pressable
-            style={styles.quickBtn}
+            style={styles.actionBtn}
             onPress={() => router.push(`/deck/${deckId}/add-card`)}
           >
-            <Ionicons name="add-circle-outline" size={18} color={Colors.primary} />
-            <Text style={styles.quickBtnText}>Карточка</Text>
+            <Ionicons name="add-circle-outline" size={20} color={Colors.primary} />
+            <Text style={styles.actionText}>Карточка</Text>
+          </Pressable>
+          <Pressable
+            style={styles.actionBtn}
+            onPress={() => router.push(`/deck/${deckId}/edit`)}
+          >
+            <Ionicons name="settings-outline" size={20} color={Colors.textMuted} />
           </Pressable>
         </View>
 
-        {/* Topics */}
-        <View style={styles.topicsList}>
+        {/* Topics list */}
+        <View style={styles.topicsSection}>
+          <Text style={styles.sectionTitle}>Темы</Text>
           {topics.length === 0 ? (
             <EmptyState
               icon="folder-open-outline"
@@ -141,58 +165,60 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 40,
   },
-  actionBar: {
+  heroSection: {
+    marginBottom: 16,
+  },
+  studyCTA: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    padding: 18,
+    borderRadius: 16,
     marginBottom: 16,
   },
-  studyAllBtn: {
+  studyCTALeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
+    gap: 14,
   },
-  studyAllText: {
-    color: '#fff',
-    fontSize: 15,
+  studyCTATitle: {
+    fontSize: 16,
     fontWeight: '700',
+    color: '#fff',
   },
-  iconBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: Colors.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
+  studyCTACount: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.75)',
+    marginTop: 2,
   },
-  quickActions: {
+  actions: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
     marginBottom: 20,
   },
-  quickBtn: {
+  actionBtn: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 12,
-    borderRadius: 10,
+    gap: 4,
+    paddingVertical: 14,
+    borderRadius: 12,
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  quickBtnText: {
-    fontSize: 13,
+  actionText: {
+    fontSize: 11,
     fontWeight: '600',
     color: Colors.primary,
   },
-  topicsList: {
-    flex: 1,
+  topicsSection: {
+    gap: 8,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.text,
+    marginBottom: 4,
   },
 });

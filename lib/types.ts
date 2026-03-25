@@ -56,6 +56,34 @@ export interface Card {
   created_at: string;
 }
 
+export interface ReviewRecord {
+  id: number;
+  card_id: number;
+  rating: number;
+  reviewed_at: string;
+}
+
+export interface DayActivity {
+  date: string;
+  count: number;
+}
+
+export const STATUS_LABELS: Record<string, string> = {
+  new: 'Новые',
+  learning: 'Изучаются',
+  reviewing: 'Закрепляются',
+  mastered: 'Усвоены',
+  archived: 'Архив',
+};
+
+export const STATUS_COLORS: Record<string, string> = {
+  new: '#64748B',
+  learning: '#F87171',
+  reviewing: '#FBBF24',
+  mastered: '#34D399',
+  archived: '#818CF8',
+};
+
 export const DECK_COLORS = [
   '#6366F1', // indigo
   '#8B5CF6', // violet
@@ -70,8 +98,8 @@ export const DECK_COLORS = [
 ];
 
 export function getHealthColor(avgEasiness: number, totalCards: number): string {
-  if (totalCards === 0) return '#94A3B8';
-  if (avgEasiness >= 2.2) return '#22C55E';
-  if (avgEasiness >= 1.7) return '#F59E0B';
-  return '#EF4444';
+  if (totalCards === 0) return '#64748B';
+  if (avgEasiness >= 2.2) return '#34D399';
+  if (avgEasiness >= 1.7) return '#FBBF24';
+  return '#F87171';
 }

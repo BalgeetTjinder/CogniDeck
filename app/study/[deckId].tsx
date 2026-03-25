@@ -3,7 +3,7 @@ import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '../../lib/colors';
-import { getDueCards, getDueCardsByTopic, updateCardReview } from '../../lib/database';
+import { getDueCards, getDueCardsByTopic, updateCardReview, logReview } from '../../lib/database';
 import { calculateSM2, getStatusFromHistory } from '../../lib/sm2';
 import type { Card, Rating } from '../../lib/types';
 
@@ -46,6 +46,7 @@ export default function StudyScreen() {
     const status = getStatusFromHistory(easiness, interval);
 
     await updateCardReview(currentCard.id, easiness, interval, nextReview, status);
+    await logReview(currentCard.id, rating);
 
     setStats((prev) => ({
       hard: prev.hard + (rating === 0 ? 1 : 0),
@@ -233,7 +234,7 @@ const styles = StyleSheet.create({
   cardLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: Colors.textLight,
+    color: Colors.textMuted,
     letterSpacing: 1,
     marginBottom: 12,
   },

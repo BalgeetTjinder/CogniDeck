@@ -35,7 +35,7 @@ export default function CreateDeckScreen() {
         <TextInput
           style={styles.input}
           placeholder="Например: Английский B2"
-          placeholderTextColor={Colors.textLight}
+          placeholderTextColor={Colors.textMuted}
           value={title}
           onChangeText={setTitle}
           autoFocus

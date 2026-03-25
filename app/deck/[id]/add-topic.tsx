@@ -35,7 +35,7 @@ export default function AddTopicScreen() {
         <TextInput
           style={styles.input}
           placeholder="Например: Времена глаголов"
-          placeholderTextColor={Colors.textLight}
+          placeholderTextColor={Colors.textMuted}
           value={title}
           onChangeText={setTitle}
           autoFocus

@@ -14,16 +14,19 @@ export function calculateSM2(
   let newEasiness = easiness;
   let newInterval = interval;
 
+  // First review (interval = 0): treat as if interval was 1
+  const effectiveInterval = interval < 1 ? 1 : interval;
+
   switch (rating) {
-    case 0: // Hard
+    case 0: // Hard — reset
       newInterval = 1;
       newEasiness = Math.max(1.3, easiness - 0.2);
       break;
-    case 1: // OK
-      newInterval = Math.max(1, Math.ceil(interval * 1.2));
+    case 1: // OK — grow slowly
+      newInterval = Math.max(1, Math.ceil(effectiveInterval * 1.2));
       break;
-    case 2: // Easy
-      newInterval = Math.max(1, Math.ceil(interval * easiness));
+    case 2: // Easy — grow fast
+      newInterval = Math.max(2, Math.ceil(effectiveInterval * easiness));
       newEasiness = Math.min(3.5, easiness + 0.1);
       break;
   }

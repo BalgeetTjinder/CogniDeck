@@ -17,7 +17,7 @@ export function TopicItem({ topic, onStudy, onDelete, expanded, onToggle }: Topi
   return (
     <View style={styles.container}>
       <Pressable style={styles.header} onPress={onToggle}>
-        <View style={[styles.healthDot, { backgroundColor: healthColor }]} />
+        <View style={[styles.healthDot, { backgroundColor: healthColor, shadowColor: healthColor }]} />
         <View style={styles.titleRow}>
           <Text style={styles.title} numberOfLines={1}>{topic.title}</Text>
           <Text style={styles.count}>{topic.total_cards} карт.</Text>
@@ -25,7 +25,7 @@ export function TopicItem({ topic, onStudy, onDelete, expanded, onToggle }: Topi
         <Ionicons
           name={expanded ? 'chevron-up' : 'chevron-down'}
           size={18}
-          color={Colors.textLight}
+          color={Colors.textMuted}
         />
       </Pressable>
 
@@ -62,9 +62,11 @@ export function TopicItem({ topic, onStudy, onDelete, expanded, onToggle }: Topi
 const styles = StyleSheet.create({
   container: {
     backgroundColor: Colors.surface,
-    borderRadius: 12,
+    borderRadius: 14,
     marginBottom: 8,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   header: {
     flexDirection: 'row',
@@ -76,6 +78,10 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 3,
+    elevation: 3,
   },
   titleRow: {
     flex: 1,
@@ -92,13 +98,13 @@ const styles = StyleSheet.create({
   },
   count: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
   },
   body: {
     paddingHorizontal: 14,
     paddingBottom: 14,
     borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
+    borderTopColor: Colors.border,
   },
   subtopic: {
     flexDirection: 'row',
@@ -119,13 +125,13 @@ const styles = StyleSheet.create({
   },
   subCount: {
     fontSize: 13,
-    color: Colors.textLight,
+    color: Colors.textMuted,
   },
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 8,
+    marginTop: 10,
   },
   studyBtn: {
     flexDirection: 'row',

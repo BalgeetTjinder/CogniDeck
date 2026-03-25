@@ -20,16 +20,16 @@ export function DeckCard({ deck, onPress }: DeckCardProps) {
       <View style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.title} numberOfLines={1}>{deck.title}</Text>
-          <View style={[styles.healthDot, { backgroundColor: healthColor }]} />
+          <View style={[styles.healthDot, { backgroundColor: healthColor, shadowColor: healthColor }]} />
         </View>
         <View style={styles.footer}>
           <View style={styles.stat}>
-            <Ionicons name="documents-outline" size={14} color={Colors.textSecondary} />
+            <Ionicons name="documents-outline" size={14} color={Colors.textMuted} />
             <Text style={styles.statText}>{deck.total_cards} карточек</Text>
           </View>
           {deck.due_today > 0 && (
-            <View style={[styles.badge, { backgroundColor: deck.color + '18' }]}>
-              <Text style={[styles.badgeText, { color: deck.color }]}>
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>
                 {deck.due_today} на сегодня
               </Text>
             </View>
@@ -46,20 +46,17 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderRadius: 16,
     marginHorizontal: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: Colors.border,
     overflow: 'hidden',
   },
   pressed: {
-    opacity: 0.85,
+    opacity: 0.8,
     transform: [{ scale: 0.98 }],
   },
   colorStripe: {
-    width: 6,
+    width: 5,
   },
   content: {
     flex: 1,
@@ -69,11 +66,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   title: {
     fontSize: 17,
-    fontWeight: '600',
+    fontWeight: '700',
     color: Colors.text,
     flex: 1,
     marginRight: 8,
@@ -82,6 +79,10 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 4,
   },
   footer: {
     flexDirection: 'row',
@@ -91,19 +92,21 @@ const styles = StyleSheet.create({
   stat: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
   },
   statText: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
   },
   badge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 10,
+    backgroundColor: Colors.accent + '20',
   },
   badgeText: {
     fontSize: 12,
     fontWeight: '600',
+    color: Colors.accent,
   },
 });
