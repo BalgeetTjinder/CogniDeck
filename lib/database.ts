@@ -372,3 +372,135 @@ export async function getTotalReviewsToday(): Promise<number> {
   );
   return row?.count ?? 0;
 }
+
+// ── Hard Cards (learning / recently failed) ──
+
+export async function getHardCards(deckId: number): Promise<Card[]> {
+  const database = await getDatabase();
+  return database.getAllAsync<Card>(`
+    SELECT DISTINCT c.*
+    FROM cards c
+    JOIN subtopics st ON st.id = c.subtopic_id
+    JOIN topics t ON t.id = st.topic_id
+    LEFT JOIN review_history rh ON rh.card_id = c.id
+    WHERE t.deck_id = ?
+      AND (c.status IN ('learning', 'new') OR c.easiness < 2.0
+           OR rh.id IN (
+             SELECT rh2.id FROM review_history rh2
+             WHERE rh2.card_id = c.id AND rh2.rating = 0
+             ORDER BY rh2.reviewed_at DESC LIMIT 1
+           ))
+    ORDER BY c.easiness ASC
+  `, [deckId]);
+}
+
+// ── Search ──
+
+export async function searchCards(
+  query: string,
+  deckId?: number
+): Promise<(Card & { deck_title: string; deck_color: string; deck_id: number; topic_title: string })[]> {
+  const database = await getDatabase();
+  const pattern = `%${query}%`;
+  if (deckId) {
+    return database.getAllAsync(`
+      SELECT c.*, d.title as deck_title, d.color as deck_color, d.id as deck_id, t.title as topic_title
+      FROM cards c
+      JOIN subtopics st ON st.id = c.subtopic_id
+      JOIN topics t ON t.id = st.topic_id
+      JOIN decks d ON d.id = t.deck_id
+      WHERE t.deck_id = ? AND (c.question LIKE ? OR c.answer LIKE ?)
+      ORDER BY c.created_at DESC
+    `, [deckId, pattern, pattern]);
+  }
+  return database.getAllAsync(`
+    SELECT c.*, d.title as deck_title, d.color as deck_color, d.id as deck_id, t.title as topic_title
+    FROM cards c
+    JOIN subtopics st ON st.id = c.subtopic_id
+    JOIN topics t ON t.id = st.topic_id
+    JOIN decks d ON d.id = t.deck_id
+    WHERE c.question LIKE ? OR c.answer LIKE ?
+    ORDER BY c.created_at DESC
+  `, [pattern, pattern]);
+}
+
+// ── Batch Operations ──
+
+export async function deleteCards(ids: number[]): Promise<void> {
+  if (ids.length === 0) return;
+  const database = await getDatabase();
+  const placeholders = ids.map(() => '?').join(',');
+  await database.runAsync(`DELETE FROM cards WHERE id IN (${placeholders})`, ids);
+}
+
+export async function moveCards(cardIds: number[], targetSubtopicId: number): Promise<void> {
+  if (cardIds.length === 0) return;
+  const database = await getDatabase();
+  const placeholders = cardIds.map(() => '?').join(',');
+  await database.runAsync(
+    `UPDATE cards SET subtopic_id = ? WHERE id IN (${placeholders})`,
+    [targetSubtopicId, ...cardIds]
+  );
+}
+
+export async function bulkImportCards(
+  subtopicId: number,
+  pairs: { question: string; answer: string }[]
+): Promise<number> {
+  if (pairs.length === 0) return 0;
+  const database = await getDatabase();
+  let count = 0;
+  for (const { question, answer } of pairs) {
+    if (question.trim() && answer.trim()) {
+      await database.runAsync(
+        'INSERT INTO cards (subtopic_id, question, answer) VALUES (?, ?, ?)',
+        [subtopicId, question.trim(), answer.trim()]
+      );
+      count++;
+    }
+  }
+  return count;
+}
+
+// ── Settings (stored in SQLite for simplicity) ──
+
+export async function initSettingsTable(): Promise<void> {
+  const database = await getDatabase();
+  await database.execAsync(`
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+  `);
+}
+
+export async function getSetting(key: string): Promise<string | null> {
+  const database = await getDatabase();
+  await initSettingsTable();
+  const row = await database.getFirstAsync<{ value: string }>(
+    'SELECT value FROM settings WHERE key = ?',
+    [key]
+  );
+  return row?.value ?? null;
+}
+
+export async function setSetting(key: string, value: string): Promise<void> {
+  const database = await getDatabase();
+  await initSettingsTable();
+  await database.runAsync(
+    'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+    [key, value]
+  );
+}
+
+// ── Counts for notifications ──
+
+export async function getTotalDueToday(): Promise<number> {
+  const database = await getDatabase();
+  const today = todayString();
+  const row = await database.getFirstAsync<{ count: number }>(
+    'SELECT COUNT(*) as count FROM cards WHERE next_review <= ?',
+    [today]
+  );
+  return row?.count ?? 0;
+}

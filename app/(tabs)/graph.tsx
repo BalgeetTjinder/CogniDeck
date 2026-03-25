@@ -3,9 +3,9 @@ import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions } from 'react
 import { useFocusEffect, useRouter } from 'expo-router';
 import Svg, { Circle, Line, Defs, RadialGradient, Stop, Text as SvgText } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../lib/colors';
+import { useTheme } from '../../lib/theme';
 import { getDecks, getTopicsWithStats } from '../../lib/database';
-import { getHealthColor, DeckWithStats, TopicWithStats } from '../../lib/types';
+import { getHealthColor } from '../../lib/types';
 import { EmptyState } from '../../components/EmptyState';
 
 interface DeckNode {
@@ -16,21 +16,14 @@ interface DeckNode {
   y: number;
   r: number;
   healthColor: string;
-  glowColor: string;
   totalCards: number;
   dueToday: number;
-  topics: { title: string; healthColor: string; x: number; y: number; r: number; cards: number }[];
-}
-
-function getGlow(color: string): string {
-  if (color === Colors.success) return Colors.successGlow;
-  if (color === Colors.warning) return Colors.warningGlow;
-  if (color === Colors.danger) return Colors.dangerGlow;
-  return 'rgba(129, 140, 248, 0.3)';
+  topics: { title: string; healthColor: string; x: number; y: number; r: number }[];
 }
 
 export default function GlobalGraphScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const [deckNodes, setDeckNodes] = useState<DeckNode[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -68,7 +61,6 @@ export default function GlobalGraphScreen() {
               x: dx + tOrbit * Math.cos(tAngle),
               y: dy + tOrbit * Math.sin(tAngle),
               r: tR,
-              cards: t.total_cards,
             };
           });
 
@@ -78,7 +70,6 @@ export default function GlobalGraphScreen() {
             color: deck.color,
             x: dx, y: dy, r: deckR,
             healthColor: hc,
-            glowColor: getGlow(hc),
             totalCards: deck.total_cards,
             dueToday: deck.due_today,
             topics: topicNodes,
@@ -102,10 +93,15 @@ export default function GlobalGraphScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.subtitle}>Нажмите на колоду для подробностей</Text>
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.content}
+    >
+      <Text style={[styles.subtitle, { color: colors.textMuted }]}>
+        Нажмите на колоду для подробностей
+      </Text>
 
-      <View style={styles.graphCard}>
+      <View style={[styles.graphCard, { backgroundColor: colors.graphBg, borderColor: colors.border }]}>
         <View style={{ width: graphW, height: graphH }}>
           <Svg width={graphW} height={graphH} style={StyleSheet.absoluteFill}>
             <Defs>
@@ -118,20 +114,18 @@ export default function GlobalGraphScreen() {
               ))}
             </Defs>
 
-            {/* Topic connections */}
             {deckNodes.flatMap(d =>
               d.topics.map((t, ti) => (
                 <Line
                   key={`line-${d.id}-${ti}`}
                   x1={d.x} y1={d.y} x2={t.x} y2={t.y}
-                  stroke={Colors.graphLine}
+                  stroke={colors.graphLine}
                   strokeWidth={1}
                   strokeDasharray="3,3"
                 />
               ))
             )}
 
-            {/* Topic nodes */}
             {deckNodes.flatMap(d =>
               d.topics.map((t, ti) => (
                 <Circle
@@ -149,14 +143,13 @@ export default function GlobalGraphScreen() {
                   key={`tl-${d.id}-${ti}`}
                   x={t.x} y={t.y + 1}
                   textAnchor="middle" alignmentBaseline="central"
-                  fontSize={8} fontWeight="500" fill={Colors.textSecondary}
+                  fontSize={8} fontWeight="500" fill={colors.textSecondary}
                 >
                   {t.title}
                 </SvgText>
               ))
             )}
 
-            {/* Deck glow */}
             {deckNodes.map(d => (
               <Circle
                 key={`dglow-${d.id}`}
@@ -165,7 +158,6 @@ export default function GlobalGraphScreen() {
               />
             ))}
 
-            {/* Deck circles */}
             {deckNodes.map(d => (
               <Circle
                 key={`dc-${d.id}`}
@@ -176,13 +168,12 @@ export default function GlobalGraphScreen() {
               />
             ))}
 
-            {/* Deck labels */}
             {deckNodes.map(d => (
               <SvgText
                 key={`dl-${d.id}`}
                 x={d.x} y={d.y - 6}
                 textAnchor="middle" alignmentBaseline="central"
-                fontSize={12} fontWeight="700" fill={Colors.text}
+                fontSize={12} fontWeight="700" fill={colors.text}
               >
                 {d.title.length > 14 ? d.title.slice(0, 13) + '…' : d.title}
               </SvgText>
@@ -192,18 +183,17 @@ export default function GlobalGraphScreen() {
                 key={`dc2-${d.id}`}
                 x={d.x} y={d.y + 10}
                 textAnchor="middle" alignmentBaseline="central"
-                fontSize={10} fill={Colors.textSecondary}
+                fontSize={10} fill={colors.textSecondary}
               >
                 {d.totalCards} карт.
               </SvgText>
             ))}
 
-            {/* Due badges */}
             {deckNodes.filter(d => d.dueToday > 0).map(d => (
               <Circle
                 key={`dbadge-${d.id}`}
                 cx={d.x + d.r * 0.6} cy={d.y - d.r * 0.6} r={12}
-                fill={Colors.accent}
+                fill={colors.accent}
               />
             ))}
             {deckNodes.filter(d => d.dueToday > 0).map(d => (
@@ -218,7 +208,6 @@ export default function GlobalGraphScreen() {
             ))}
           </Svg>
 
-          {/* Native pressable overlays for deck nodes */}
           {deckNodes.map(d => (
             <Pressable
               key={`press-${d.id}`}
@@ -236,22 +225,21 @@ export default function GlobalGraphScreen() {
         </View>
       </View>
 
-      {/* Quick summary */}
       <View style={styles.summaryRow}>
         {deckNodes.map(d => (
           <Pressable
             key={d.id}
-            style={styles.summaryCard}
+            style={[styles.summaryCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
             onPress={() => router.push(`/deck/${d.id}`)}
           >
             <View style={[styles.summaryDot, { backgroundColor: d.color }]} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.summaryTitle} numberOfLines={1}>{d.title}</Text>
-              <Text style={styles.summaryMeta}>
+              <Text style={[styles.summaryTitle, { color: colors.text }]} numberOfLines={1}>{d.title}</Text>
+              <Text style={[styles.summaryMeta, { color: colors.textMuted }]}>
                 {d.totalCards} карт.{d.dueToday > 0 ? ` · ${d.dueToday} на сегодня` : ''}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+            <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />
           </Pressable>
         ))}
       </View>
@@ -260,54 +248,26 @@ export default function GlobalGraphScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  content: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  subtitle: {
-    fontSize: 13,
-    color: Colors.textMuted,
-    textAlign: 'center',
-    marginBottom: 12,
-  },
+  container: { flex: 1 },
+  content: { padding: 16, paddingBottom: 40 },
+  subtitle: { fontSize: 13, textAlign: 'center', marginBottom: 12 },
   graphCard: {
-    backgroundColor: Colors.graphBg,
     borderRadius: 24,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Colors.border,
     marginBottom: 20,
   },
-  summaryRow: {
-    gap: 8,
-  },
+  summaryRow: { gap: 8 },
   summaryCard: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: Colors.surface,
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: Colors.border,
+    marginBottom: 8,
   },
-  summaryDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  summaryTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: Colors.text,
-  },
-  summaryMeta: {
-    fontSize: 12,
-    color: Colors.textMuted,
-    marginTop: 2,
-  },
+  summaryDot: { width: 10, height: 10, borderRadius: 5 },
+  summaryTitle: { fontSize: 15, fontWeight: '600' },
+  summaryMeta: { fontSize: 12, marginTop: 2 },
 });

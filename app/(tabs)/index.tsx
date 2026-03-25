@@ -1,15 +1,16 @@
 import { useCallback, useState } from 'react';
-import { View, FlatList, Pressable, StyleSheet, Alert } from 'react-native';
+import { View, FlatList, Pressable, StyleSheet } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../lib/colors';
+import { useTheme } from '../../lib/theme';
 import { DeckWithStats } from '../../lib/types';
-import { getDecks, deleteDeck } from '../../lib/database';
+import { getDecks } from '../../lib/database';
 import { DeckCard } from '../../components/DeckCard';
 import { EmptyState } from '../../components/EmptyState';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const [decks, setDecks] = useState<DeckWithStats[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,7 +32,7 @@ export default function HomeScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <FlatList
         data={decks}
         keyExtractor={(item) => item.id.toString()}
@@ -54,7 +55,7 @@ export default function HomeScreen() {
       />
 
       <Pressable
-        style={styles.fab}
+        style={[styles.fab, { backgroundColor: colors.primary, shadowColor: colors.primary }]}
         onPress={() => router.push('/deck/create')}
       >
         <Ionicons name="add" size={28} color="#fff" />
@@ -64,17 +65,9 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  list: {
-    paddingTop: 12,
-    paddingBottom: 100,
-  },
-  emptyList: {
-    flex: 1,
-  },
+  container: { flex: 1 },
+  list: { paddingTop: 12, paddingBottom: 100 },
+  emptyList: { flex: 1 },
   fab: {
     position: 'absolute',
     right: 20,
@@ -82,10 +75,8 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: Colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 12,

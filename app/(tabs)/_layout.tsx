@@ -1,21 +1,25 @@
-import { Tabs } from 'expo-router';
+import { Pressable } from 'react-native';
+import { Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../lib/colors';
+import { useTheme } from '../../lib/theme';
 
 export default function TabsLayout() {
+  const { colors } = useTheme();
+  const router = useRouter();
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textMuted,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: {
-          backgroundColor: Colors.surface,
-          borderTopColor: Colors.border,
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
           borderTopWidth: 1,
           paddingTop: 4,
         },
-        headerStyle: { backgroundColor: Colors.background },
-        headerTintColor: Colors.text,
+        headerStyle: { backgroundColor: colors.background },
+        headerTintColor: colors.text,
         headerTitleStyle: { fontWeight: '700', fontSize: 24 },
         headerShadowVisible: false,
       }}
@@ -27,6 +31,19 @@ export default function TabsLayout() {
           tabBarLabel: 'Колоды',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="layers-outline" size={size} color={color} />
+          ),
+          headerRight: () => (
+            <Pressable
+              style={{ flexDirection: 'row', gap: 16, marginRight: 16 }}
+              onPress={() => {}}
+            >
+              <Pressable onPress={() => router.push('/search')}>
+                <Ionicons name="search-outline" size={24} color={colors.text} />
+              </Pressable>
+              <Pressable onPress={() => router.push('/settings')}>
+                <Ionicons name="settings-outline" size={24} color={colors.text} />
+              </Pressable>
+            </Pressable>
           ),
         }}
       />

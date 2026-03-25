@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Colors } from '../../../lib/colors';
+import { useTheme } from '../../../lib/theme';
 import { getTopicsWithStats, createSubtopic } from '../../../lib/database';
 import type { TopicWithStats } from '../../../lib/types';
 
 export default function AddSubtopicScreen() {
+  const { colors } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const deckId = Number(id);
@@ -38,25 +39,30 @@ export default function AddSubtopicScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.form}>
-        <Text style={styles.label}>Тема</Text>
+        <Text style={[styles.label, { color: colors.textSecondary }]}>Тема</Text>
         <View style={styles.topicPicker}>
           {topics.map((t) => (
             <Pressable
               key={t.id}
               style={[
                 styles.topicChip,
-                selectedTopicId === t.id && styles.topicChipActive,
+                { backgroundColor: colors.surface, borderColor: colors.border },
+                selectedTopicId === t.id && {
+                  backgroundColor: colors.primary,
+                  borderColor: colors.primary,
+                },
               ]}
               onPress={() => setSelectedTopicId(t.id)}
             >
               <Text
                 style={[
                   styles.topicChipText,
-                  selectedTopicId === t.id && styles.topicChipTextActive,
+                  { color: colors.text },
+                  selectedTopicId === t.id && { color: '#fff', fontWeight: '600' },
                 ]}
                 numberOfLines={1}
               >
@@ -67,14 +73,21 @@ export default function AddSubtopicScreen() {
         </View>
 
         {topics.length === 0 && (
-          <Text style={styles.hint}>Сначала создайте тему в колоде</Text>
+          <Text style={[styles.hint, { color: colors.warning }]}>Сначала создайте тему в колоде</Text>
         )}
 
-        <Text style={[styles.label, { marginTop: 24 }]}>Название подтемы</Text>
+        <Text style={[styles.label, { marginTop: 24, color: colors.textSecondary }]}>Название подтемы</Text>
         <TextInput
-          style={styles.input}
+          style={[
+            styles.input,
+            {
+              backgroundColor: colors.surface,
+              color: colors.text,
+              borderColor: colors.border,
+            },
+          ]}
           placeholder="Например: Present Perfect"
-          placeholderTextColor={Colors.textMuted}
+          placeholderTextColor={colors.textMuted}
           value={title}
           onChangeText={setTitle}
           autoFocus
@@ -84,7 +97,11 @@ export default function AddSubtopicScreen() {
       </View>
 
       <Pressable
-        style={[styles.saveBtn, (!title.trim() || !selectedTopicId) && styles.saveBtnDisabled]}
+        style={[
+          styles.saveBtn,
+          { backgroundColor: colors.primary },
+          (!title.trim() || !selectedTopicId) && styles.saveBtnDisabled,
+        ]}
         onPress={handleSave}
         disabled={!title.trim() || !selectedTopicId || saving}
       >
@@ -97,7 +114,6 @@ export default function AddSubtopicScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   form: {
     flex: 1,
@@ -106,7 +122,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.textSecondary,
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -120,40 +135,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  topicChipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
   },
   topicChipText: {
     fontSize: 14,
-    color: Colors.text,
-  },
-  topicChipTextActive: {
-    color: '#fff',
-    fontWeight: '600',
   },
   hint: {
     marginTop: 12,
     fontSize: 13,
-    color: Colors.warning,
   },
   input: {
-    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: Colors.text,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   saveBtn: {
     marginHorizontal: 20,
     marginBottom: 32,
-    backgroundColor: Colors.primary,
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',

@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { Platform, View, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Colors } from '../lib/colors';
+import { ThemeProvider, useTheme } from '../lib/theme';
 import { WebNotSupported } from '../components/WebNotSupported';
 import { seedDemoData } from '../lib/seed';
 
-export default function RootLayout() {
+function AppContent() {
+  const { colors, mode } = useTheme();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -20,22 +21,22 @@ export default function RootLayout() {
 
   if (!ready) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background }}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
-          headerStyle: { backgroundColor: Colors.background },
-          headerTintColor: Colors.text,
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
           headerTitleStyle: { fontWeight: '600' },
           headerShadowVisible: false,
-          contentStyle: { backgroundColor: Colors.background },
+          contentStyle: { backgroundColor: colors.background },
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -64,6 +65,10 @@ export default function RootLayout() {
           options={{ title: 'Новая карточка', presentation: 'modal' }}
         />
         <Stack.Screen
+          name="deck/[id]/import"
+          options={{ title: 'Импорт карточек', presentation: 'modal' }}
+        />
+        <Stack.Screen
           name="deck/[id]/graph"
           options={{ title: 'Граф знаний' }}
         />
@@ -71,7 +76,23 @@ export default function RootLayout() {
           name="study/[deckId]"
           options={{ title: 'Сессия', headerBackTitle: 'Назад' }}
         />
+        <Stack.Screen
+          name="search"
+          options={{ title: 'Поиск', presentation: 'modal' }}
+        />
+        <Stack.Screen
+          name="settings"
+          options={{ title: 'Настройки', presentation: 'modal' }}
+        />
       </Stack>
     </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }

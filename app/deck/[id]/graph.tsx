@@ -1,13 +1,14 @@
 import { useCallback, useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { StyleSheet, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect, Stack } from 'expo-router';
-import { Colors } from '../../../lib/colors';
+import { useTheme } from '../../../lib/theme';
 import { getDeck, getTopicsWithStats } from '../../../lib/database';
 import { KnowledgeGraph } from '../../../components/KnowledgeGraph';
 import { EmptyState } from '../../../components/EmptyState';
 import type { Deck, TopicWithStats } from '../../../lib/types';
 
 export default function GraphScreen() {
+  const { colors } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const deckId = Number(id);
@@ -31,7 +32,10 @@ export default function GraphScreen() {
   if (!deck) return null;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.content}
+    >
       <Stack.Screen options={{ title: `${deck.title} — Граф` }} />
       {topics.length === 0 ? (
         <EmptyState
@@ -53,7 +57,6 @@ export default function GraphScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   content: {
     flexGrow: 1,

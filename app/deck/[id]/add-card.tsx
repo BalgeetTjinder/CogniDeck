@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Colors } from '../../../lib/colors';
+import { useTheme } from '../../../lib/theme';
 import { getSubtopicsByDeck, createCard } from '../../../lib/database';
 import type { Subtopic } from '../../../lib/types';
 
 export default function AddCardScreen() {
+  const { colors } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const deckId = Number(id);
@@ -54,13 +55,22 @@ export default function AddCardScreen() {
 
   const canSave = question.trim() && answer.trim() && selectedSubtopicId;
 
+  const inputStyle = [
+    styles.input,
+    {
+      backgroundColor: colors.surface,
+      color: colors.text,
+      borderColor: colors.border,
+    },
+  ];
+
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
-        <Text style={styles.label}>Подтема</Text>
+        <Text style={[styles.label, { color: colors.textSecondary }]}>Подтема</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
           <View style={styles.chipRow}>
             {subtopics.map((st) => (
@@ -68,14 +78,19 @@ export default function AddCardScreen() {
                 key={st.id}
                 style={[
                   styles.chip,
-                  selectedSubtopicId === st.id && styles.chipActive,
+                  { backgroundColor: colors.surface, borderColor: colors.border },
+                  selectedSubtopicId === st.id && {
+                    backgroundColor: colors.primary,
+                    borderColor: colors.primary,
+                  },
                 ]}
                 onPress={() => setSelectedSubtopicId(st.id)}
               >
                 <Text
                   style={[
                     styles.chipText,
-                    selectedSubtopicId === st.id && styles.chipTextActive,
+                    { color: colors.text },
+                    selectedSubtopicId === st.id && { color: '#fff', fontWeight: '600' },
                   ]}
                   numberOfLines={1}
                 >
@@ -87,36 +102,36 @@ export default function AddCardScreen() {
         </ScrollView>
 
         {subtopics.length === 0 && (
-          <Text style={styles.warning}>Сначала создайте тему и подтему</Text>
+          <Text style={[styles.warning, { color: colors.warning }]}>Сначала создайте тему и подтему</Text>
         )}
 
-        <Text style={[styles.label, { marginTop: 20 }]}>Вопрос</Text>
+        <Text style={[styles.label, { marginTop: 20, color: colors.textSecondary }]}>Вопрос</Text>
         <TextInput
-          style={[styles.input, styles.inputMultiline]}
+          style={[...inputStyle, styles.inputMultiline]}
           placeholder="Что нужно вспомнить?"
-          placeholderTextColor={Colors.textMuted}
+          placeholderTextColor={colors.textMuted}
           value={question}
           onChangeText={setQuestion}
           multiline
           textAlignVertical="top"
         />
 
-        <Text style={[styles.label, { marginTop: 16 }]}>Ответ</Text>
+        <Text style={[styles.label, { marginTop: 16, color: colors.textSecondary }]}>Ответ</Text>
         <TextInput
-          style={[styles.input, styles.inputMultiline]}
+          style={[...inputStyle, styles.inputMultiline]}
           placeholder="Правильный ответ"
-          placeholderTextColor={Colors.textMuted}
+          placeholderTextColor={colors.textMuted}
           value={answer}
           onChangeText={setAnswer}
           multiline
           textAlignVertical="top"
         />
 
-        <Text style={[styles.label, { marginTop: 16 }]}>Подсказка (необязательно)</Text>
+        <Text style={[styles.label, { marginTop: 16, color: colors.textSecondary }]}>Подсказка (необязательно)</Text>
         <TextInput
-          style={styles.input}
+          style={inputStyle}
           placeholder="Подсказка при затруднении"
-          placeholderTextColor={Colors.textMuted}
+          placeholderTextColor={colors.textMuted}
           value={hint}
           onChangeText={setHint}
         />
@@ -124,16 +139,20 @@ export default function AddCardScreen() {
 
       <View style={styles.buttons}>
         <Pressable
-          style={[styles.addMoreBtn, !canSave && styles.btnDisabled]}
+          style={[
+            styles.addMoreBtn,
+            {
+              backgroundColor: colors.surface,
+              borderColor: colors.primary,
+            },
+            !canSave && styles.btnDisabled,
+          ]}
           onPress={handleSave}
           disabled={!canSave || saving}
         >
-          <Text style={styles.addMoreText}>+ Ещё карточку</Text>
+          <Text style={[styles.addMoreText, { color: colors.primary }]}>+ Ещё карточку</Text>
         </Pressable>
-        <Pressable
-          style={styles.doneBtn}
-          onPress={handleSaveAndClose}
-        >
+        <Pressable style={[styles.doneBtn, { backgroundColor: colors.primary }]} onPress={handleSaveAndClose}>
           <Text style={styles.doneBtnText}>Готово</Text>
         </Pressable>
       </View>
@@ -144,7 +163,6 @@ export default function AddCardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   form: {
     padding: 20,
@@ -153,7 +171,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.textSecondary,
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -169,35 +186,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  chipActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
   },
   chipText: {
     fontSize: 13,
-    color: Colors.text,
-  },
-  chipTextActive: {
-    color: '#fff',
-    fontWeight: '600',
   },
   warning: {
     marginTop: 8,
     fontSize: 13,
-    color: Colors.warning,
   },
   input: {
-    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: Colors.text,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   inputMultiline: {
     minHeight: 80,
@@ -214,15 +216,12 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
-    backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: Colors.primary,
   },
   btnDisabled: {
     opacity: 0.4,
   },
   addMoreText: {
-    color: Colors.primary,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -231,7 +230,6 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: 'center',
-    backgroundColor: Colors.primary,
   },
   doneBtnText: {
     color: '#fff',

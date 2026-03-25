@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { Colors } from '../lib/colors';
+import { useTheme } from '../lib/theme';
 import type { DayActivity } from '../lib/types';
 
 interface HeatMapProps {
@@ -7,33 +7,35 @@ interface HeatMapProps {
   weeks: number;
 }
 
-function getIntensityColor(count: number, max: number): string {
-  if (count === 0) return Colors.border;
-  const ratio = count / Math.max(max, 1);
-  if (ratio > 0.75) return '#166534';
-  if (ratio > 0.5) return '#22C55E';
-  if (ratio > 0.25) return '#86EFAC';
-  return '#BBF7D0';
-}
-
 export function HeatMap({ data, weeks }: HeatMapProps) {
+  const { colors, mode } = useTheme();
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const countMap = new Map(data.map((d) => [d.date, d.count]));
   const maxCount = Math.max(...data.map((d) => d.count), 1);
 
-  // Build grid: weeks columns × 7 rows (Mon=0 ... Sun=6)
-  // Start from the Monday 'weeks' weeks ago
   const endDate = new Date(today);
   const startDate = new Date(today);
-
-  // Go back to Monday of the current week, then subtract (weeks-1) more weeks
-  const dayOfWeek = (today.getDay() + 6) % 7; // Mon=0
+  const dayOfWeek = (today.getDay() + 6) % 7;
   startDate.setDate(today.getDate() - dayOfWeek - (weeks - 1) * 7);
 
-  const columns: { date: string; count: number }[][] = [];
+  const getIntensity = (count: number): string => {
+    if (count === 0) return colors.border;
+    const ratio = count / Math.max(maxCount, 1);
+    if (mode === 'dark') {
+      if (ratio > 0.75) return '#166534';
+      if (ratio > 0.5) return '#22C55E';
+      if (ratio > 0.25) return '#86EFAC';
+      return '#BBF7D0';
+    }
+    if (ratio > 0.75) return '#166534';
+    if (ratio > 0.5) return '#22C55E';
+    if (ratio > 0.25) return '#86EFAC';
+    return '#D1FAE5';
+  };
 
+  const columns: { date: string; count: number }[][] = [];
   for (let w = 0; w < weeks; w++) {
     const col: { date: string; count: number }[] = [];
     for (let d = 0; d < 7; d++) {
@@ -55,7 +57,7 @@ export function HeatMap({ data, weeks }: HeatMapProps) {
     <View style={styles.container}>
       <View style={styles.dayLabels}>
         {dayLabels.map((label, i) => (
-          <Text key={i} style={styles.dayLabel}>{label}</Text>
+          <Text key={i} style={[styles.dayLabel, { color: colors.textMuted }]}>{label}</Text>
         ))}
       </View>
       <View style={styles.grid}>
@@ -68,7 +70,7 @@ export function HeatMap({ data, weeks }: HeatMapProps) {
                   styles.cell,
                   {
                     backgroundColor: day.date
-                      ? getIntensityColor(day.count, maxCount)
+                      ? getIntensity(day.count)
                       : 'transparent',
                   },
                 ]}
@@ -82,32 +84,10 @@ export function HeatMap({ data, weeks }: HeatMapProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    gap: 4,
-  },
-  dayLabels: {
-    justifyContent: 'space-between',
-    paddingVertical: 1,
-  },
-  dayLabel: {
-    fontSize: 9,
-    color: Colors.textMuted,
-    height: 13,
-    lineHeight: 13,
-    width: 16,
-  },
-  grid: {
-    flexDirection: 'row',
-    gap: 3,
-    flex: 1,
-  },
-  column: {
-    flex: 1,
-    gap: 3,
-  },
-  cell: {
-    aspectRatio: 1,
-    borderRadius: 3,
-  },
+  container: { flexDirection: 'row', gap: 4 },
+  dayLabels: { justifyContent: 'space-between', paddingVertical: 1 },
+  dayLabel: { fontSize: 9, height: 13, lineHeight: 13, width: 16 },
+  grid: { flexDirection: 'row', gap: 3, flex: 1 },
+  column: { flex: 1, gap: 3 },
+  cell: { aspectRatio: 1, borderRadius: 3 },
 });

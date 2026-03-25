@@ -2,9 +2,9 @@ import { useCallback, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../../../lib/colors';
+import { useTheme } from '../../../lib/theme';
 import { Deck, TopicWithStats } from '../../../lib/types';
-import { getDeck, getTopicsWithStats, deleteTopic, getDueCards } from '../../../lib/database';
+import { getDeck, getTopicsWithStats, deleteTopic, getDueCards, getHardCards } from '../../../lib/database';
 import { KnowledgeGraph } from '../../../components/KnowledgeGraph';
 import { TopicItem } from '../../../components/TopicItem';
 import { EmptyState } from '../../../components/EmptyState';
@@ -12,22 +12,26 @@ import { EmptyState } from '../../../components/EmptyState';
 export default function DeckScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { colors } = useTheme();
   const deckId = Number(id);
 
   const [deck, setDeck] = useState<Deck | null>(null);
   const [topics, setTopics] = useState<TopicWithStats[]>([]);
   const [expandedTopicId, setExpandedTopicId] = useState<number | null>(null);
   const [totalDue, setTotalDue] = useState(0);
+  const [hardCount, setHardCount] = useState(0);
 
   const loadData = useCallback(async () => {
-    const [deckData, topicsData, dueCards] = await Promise.all([
+    const [deckData, topicsData, dueCards, hard] = await Promise.all([
       getDeck(deckId),
       getTopicsWithStats(deckId),
       getDueCards(deckId),
+      getHardCards(deckId),
     ]);
     setDeck(deckData);
     setTopics(topicsData);
     setTotalDue(dueCards.length);
+    setHardCount(hard.length);
   }, [deckId]);
 
   useFocusEffect(
@@ -57,12 +61,12 @@ export default function DeckScreen() {
   if (!deck) return null;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Stack.Screen
         options={{
           title: deck.title,
-          headerStyle: { backgroundColor: Colors.background },
-          headerTintColor: Colors.text,
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
         }}
       />
 
@@ -79,7 +83,7 @@ export default function DeckScreen() {
           </View>
         )}
 
-        {/* Study CTA */}
+        {/* Study CTAs */}
         {totalDue > 0 && (
           <Pressable
             style={[styles.studyCTA, { backgroundColor: deck.color }]}
@@ -96,40 +100,67 @@ export default function DeckScreen() {
           </Pressable>
         )}
 
+        {hardCount > 0 && (
+          <Pressable
+            style={[styles.hardCTA, { backgroundColor: colors.dangerLight, borderColor: colors.danger + '40' }]}
+            onPress={() => router.push(`/study/${deckId}?mode=hard`)}
+          >
+            <View style={styles.studyCTALeft}>
+              <Ionicons name="flame" size={22} color={colors.danger} />
+              <View>
+                <Text style={[styles.hardCTATitle, { color: colors.danger }]}>Только сложные</Text>
+                <Text style={[styles.hardCTACount, { color: colors.textSecondary }]}>
+                  {hardCount} карточек требуют внимания
+                </Text>
+              </View>
+            </View>
+            <Ionicons name="arrow-forward" size={18} color={colors.danger} />
+          </Pressable>
+        )}
+
         {/* Quick actions */}
         <View style={styles.actions}>
           <Pressable
-            style={styles.actionBtn}
+            style={[styles.actionBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
             onPress={() => router.push(`/deck/${deckId}/add-topic`)}
           >
-            <Ionicons name="folder-open-outline" size={20} color={Colors.primary} />
-            <Text style={styles.actionText}>Тема</Text>
+            <Ionicons name="folder-open-outline" size={20} color={colors.primary} />
+            <Text style={[styles.actionText, { color: colors.primary }]}>Тема</Text>
           </Pressable>
           <Pressable
-            style={styles.actionBtn}
+            style={[styles.actionBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
             onPress={() => router.push(`/deck/${deckId}/add-subtopic`)}
           >
-            <Ionicons name="bookmark-outline" size={20} color={Colors.primary} />
-            <Text style={styles.actionText}>Подтема</Text>
+            <Ionicons name="bookmark-outline" size={20} color={colors.primary} />
+            <Text style={[styles.actionText, { color: colors.primary }]}>Подтема</Text>
           </Pressable>
           <Pressable
-            style={styles.actionBtn}
+            style={[styles.actionBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
             onPress={() => router.push(`/deck/${deckId}/add-card`)}
           >
-            <Ionicons name="add-circle-outline" size={20} color={Colors.primary} />
-            <Text style={styles.actionText}>Карточка</Text>
+            <Ionicons name="add-circle-outline" size={20} color={colors.primary} />
+            <Text style={[styles.actionText, { color: colors.primary }]}>Карточка</Text>
           </Pressable>
           <Pressable
-            style={styles.actionBtn}
-            onPress={() => router.push(`/deck/${deckId}/edit`)}
+            style={[styles.actionBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            onPress={() => router.push(`/deck/${deckId}/import`)}
           >
-            <Ionicons name="settings-outline" size={20} color={Colors.textMuted} />
+            <Ionicons name="download-outline" size={20} color={colors.accent} />
+            <Text style={[styles.actionText, { color: colors.accent }]}>Импорт</Text>
           </Pressable>
         </View>
 
+        <Pressable
+          style={[styles.editBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          onPress={() => router.push(`/deck/${deckId}/edit`)}
+        >
+          <Ionicons name="settings-outline" size={18} color={colors.textMuted} />
+          <Text style={[styles.editBtnText, { color: colors.textMuted }]}>Настройки колоды</Text>
+        </Pressable>
+
         {/* Topics list */}
         <View style={styles.topicsSection}>
-          <Text style={styles.sectionTitle}>Темы</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Темы</Text>
           {topics.length === 0 ? (
             <EmptyState
               icon="folder-open-outline"
@@ -157,44 +188,39 @@ export default function DeckScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  scroll: {
-    padding: 16,
-    paddingBottom: 40,
-  },
-  heroSection: {
-    marginBottom: 16,
-  },
+  container: { flex: 1 },
+  scroll: { padding: 16, paddingBottom: 40 },
+  heroSection: { marginBottom: 16 },
   studyCTA: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 18,
     borderRadius: 16,
-    marginBottom: 16,
+    marginBottom: 10,
   },
   studyCTALeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 14,
   },
-  studyCTATitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
+  studyCTATitle: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  studyCTACount: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 2 },
+  hardCTA: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 16,
   },
-  studyCTACount: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.75)',
-    marginTop: 2,
-  },
+  hardCTATitle: { fontSize: 15, fontWeight: '700' },
+  hardCTACount: { fontSize: 12, marginTop: 2 },
   actions: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 20,
+    marginBottom: 10,
   },
   actionBtn: {
     flex: 1,
@@ -203,22 +229,20 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: Colors.surface,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
-  actionText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: Colors.primary,
-  },
-  topicsSection: {
+  actionText: { fontSize: 11, fontWeight: '600' },
+  editBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 20,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.text,
-    marginBottom: 4,
-  },
+  editBtnText: { fontSize: 13, fontWeight: '500' },
+  topicsSection: { gap: 8 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
 });

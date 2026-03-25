@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, Pressable, Dimensions, Modal } from 'react-native';
 import Svg, { Circle, Line, Defs, RadialGradient, Stop, Text as SvgText } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '../lib/colors';
+import { useTheme } from '../lib/theme';
 import { TopicWithStats, getHealthColor } from '../lib/types';
 
 interface KnowledgeGraphProps {
@@ -30,9 +30,9 @@ interface BubbleData {
 }
 
 function getGlowColor(color: string): string {
-  if (color === Colors.success) return Colors.successGlow;
-  if (color === Colors.warning) return Colors.warningGlow;
-  if (color === Colors.danger) return Colors.dangerGlow;
+  if (color === '#34D399' || color === '#22C55E') return 'rgba(52, 211, 153, 0.4)';
+  if (color === '#FBBF24' || color === '#F59E0B') return 'rgba(251, 191, 36, 0.4)';
+  if (color === '#F87171' || color === '#EF4444') return 'rgba(248, 113, 113, 0.4)';
   return 'rgba(129, 140, 248, 0.3)';
 }
 
@@ -98,6 +98,7 @@ function layoutBubbles(topics: TopicWithStats[], width: number, height: number):
 }
 
 export function KnowledgeGraph({ topics, deckColor, onStudyTopic, compact }: KnowledgeGraphProps) {
+  const { colors } = useTheme();
   const { width: screenWidth } = Dimensions.get('window');
   const graphSize = compact ? screenWidth - 48 : screenWidth - 32;
   const [selected, setSelected] = useState<BubbleData | null>(null);
@@ -112,7 +113,7 @@ export function KnowledgeGraph({ topics, deckColor, onStudyTopic, compact }: Kno
 
   return (
     <View style={styles.container}>
-      <View style={[styles.graphCard, compact && styles.graphCardCompact]}>
+      <View style={[styles.graphCard, { backgroundColor: colors.graphBg, borderColor: colors.border }, compact && styles.graphCardCompact]}>
         <View style={{ width: graphSize, height: graphSize }}>
         <Svg width={graphSize} height={graphSize} style={{ position: 'absolute', left: 0, top: 0 }}>
           <Defs>
@@ -133,7 +134,7 @@ export function KnowledgeGraph({ topics, deckColor, onStudyTopic, compact }: Kno
               y1={b.parentY!}
               x2={b.x}
               y2={b.y}
-              stroke={Colors.graphLine}
+              stroke={colors.graphLine}
               strokeWidth={1.5}
               strokeDasharray="4,4"
             />
@@ -170,7 +171,7 @@ export function KnowledgeGraph({ topics, deckColor, onStudyTopic, compact }: Kno
               cx={b.x + b.r * 0.65}
               cy={b.y - b.r * 0.65}
               r={10}
-              fill={Colors.accent}
+              fill={colors.accent}
             />
           ))}
           {bubbles.filter(b => b.dueToday > 0 && b.type === 'topic').map((b) => (
@@ -198,7 +199,7 @@ export function KnowledgeGraph({ topics, deckColor, onStudyTopic, compact }: Kno
               alignmentBaseline="central"
               fontSize={b.type === 'topic' ? 11 : 8}
               fontWeight={b.type === 'topic' ? '700' : '500'}
-              fill={Colors.text}
+              fill={colors.text}
             >
               {b.label}
             </SvgText>
@@ -227,20 +228,20 @@ export function KnowledgeGraph({ topics, deckColor, onStudyTopic, compact }: Kno
       {!compact && (
         <View style={styles.legend}>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: Colors.success }]} />
-            <Text style={styles.legendText}>Усвоено</Text>
+            <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
+            <Text style={[styles.legendText, { color: colors.textMuted }]}>Усвоено</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: Colors.warning }]} />
-            <Text style={styles.legendText}>В процессе</Text>
+            <View style={[styles.legendDot, { backgroundColor: colors.warning }]} />
+            <Text style={[styles.legendText, { color: colors.textMuted }]}>В процессе</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: Colors.danger }]} />
-            <Text style={styles.legendText}>Сложно</Text>
+            <View style={[styles.legendDot, { backgroundColor: colors.danger }]} />
+            <Text style={[styles.legendText, { color: colors.textMuted }]}>Сложно</Text>
           </View>
           <View style={styles.legendItem}>
-            <View style={[styles.legendBadge, { backgroundColor: Colors.accent }]} />
-            <Text style={styles.legendText}>На сегодня</Text>
+            <View style={[styles.legendBadge, { backgroundColor: colors.accent }]} />
+            <Text style={[styles.legendText, { color: colors.textMuted }]}>На сегодня</Text>
           </View>
         </View>
       )}
@@ -248,40 +249,40 @@ export function KnowledgeGraph({ topics, deckColor, onStudyTopic, compact }: Kno
       {/* Detail modal */}
       <Modal visible={!!selected} transparent animationType="fade">
         <Pressable style={styles.overlay} onPress={() => setSelected(null)}>
-          <Pressable style={styles.modal} onPress={(e) => e.stopPropagation()}>
+          <Pressable style={[styles.modal, { backgroundColor: colors.surface, borderColor: colors.border }]} onPress={(e) => e.stopPropagation()}>
             {selected && (
               <>
                 <View style={styles.modalHeader}>
                   <View style={[styles.modalGlow, { backgroundColor: selected.glowColor }]} />
                   <View style={[styles.modalDot, { backgroundColor: selected.color }]} />
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.modalTitle}>
+                    <Text style={[styles.modalTitle, { color: colors.text }]}>
                       {topics.find(t => t.id === selected.topicId)?.title ?? ''}
                     </Text>
                     {selected.type === 'subtopic' && (
-                      <Text style={styles.modalSubtitle}>{selected.label}</Text>
+                      <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>{selected.label}</Text>
                     )}
                   </View>
                 </View>
 
-                <View style={styles.modalStats}>
+                <View style={[styles.modalStats, { backgroundColor: colors.backgroundLight }]}>
                   <View style={styles.modalStat}>
-                    <Text style={styles.modalStatNum}>{selected.totalCards}</Text>
-                    <Text style={styles.modalStatLabel}>Карточек</Text>
+                    <Text style={[styles.modalStatNum, { color: colors.text }]}>{selected.totalCards}</Text>
+                    <Text style={[styles.modalStatLabel, { color: colors.textMuted }]}>Карточек</Text>
                   </View>
-                  <View style={[styles.modalStatDivider]} />
+                  <View style={[styles.modalStatDivider, { backgroundColor: colors.border }]} />
                   <View style={styles.modalStat}>
-                    <Text style={[styles.modalStatNum, selected.dueToday > 0 && { color: Colors.accent }]}>
+                    <Text style={[styles.modalStatNum, { color: selected.dueToday > 0 ? colors.accent : colors.text }]}>
                       {selected.dueToday}
                     </Text>
-                    <Text style={styles.modalStatLabel}>На сегодня</Text>
+                    <Text style={[styles.modalStatLabel, { color: colors.textMuted }]}>На сегодня</Text>
                   </View>
-                  <View style={[styles.modalStatDivider]} />
+                  <View style={[styles.modalStatDivider, { backgroundColor: colors.border }]} />
                   <View style={styles.modalStat}>
                     <Text style={[styles.modalStatNum, { color: selected.color }]}>
                       {selected.avgEasiness.toFixed(1)}
                     </Text>
-                    <Text style={styles.modalStatLabel}>Лёгкость</Text>
+                    <Text style={[styles.modalStatLabel, { color: colors.textMuted }]}>Лёгкость</Text>
                   </View>
                 </View>
 
@@ -307,46 +308,24 @@ export function KnowledgeGraph({ topics, deckColor, onStudyTopic, compact }: Kno
 }
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    gap: 16,
-  },
+  container: { alignItems: 'center', gap: 16 },
   graphCard: {
-    backgroundColor: Colors.graphBg,
     borderRadius: 24,
     padding: 0,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: Colors.border,
   },
-  graphCardCompact: {
-    borderRadius: 20,
-  },
+  graphCardCompact: { borderRadius: 20 },
   legend: {
     flexDirection: 'row',
     gap: 16,
     flexWrap: 'wrap',
     justifyContent: 'center',
   },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  legendBadge: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  legendText: {
-    fontSize: 12,
-    color: Colors.textMuted,
-  },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  legendDot: { width: 8, height: 8, borderRadius: 4 },
+  legendBadge: { width: 8, height: 8, borderRadius: 4 },
+  legendText: { fontSize: 12 },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
@@ -355,13 +334,11 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   modal: {
-    backgroundColor: Colors.surface,
     borderRadius: 24,
     padding: 24,
     width: '100%',
     maxWidth: 340,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -371,55 +348,26 @@ const styles = StyleSheet.create({
   },
   modalGlow: {
     position: 'absolute',
-    left: -8,
-    top: -8,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    opacity: 0.5,
+    left: -8, top: -8,
+    width: 40, height: 40,
+    borderRadius: 20, opacity: 0.5,
   },
-  modalDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-  },
-  modalTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: Colors.text,
-  },
-  modalSubtitle: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
+  modalDot: { width: 14, height: 14, borderRadius: 7 },
+  modalTitle: { fontSize: 17, fontWeight: '700' },
+  modalSubtitle: { fontSize: 13, marginTop: 2 },
   modalStats: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    backgroundColor: Colors.backgroundLight,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
   },
-  modalStat: {
-    alignItems: 'center',
-    gap: 4,
-    flex: 1,
-  },
-  modalStatDivider: {
-    width: 1,
-    height: 32,
-    backgroundColor: Colors.border,
-  },
-  modalStatNum: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: Colors.text,
-  },
+  modalStat: { alignItems: 'center', gap: 4, flex: 1 },
+  modalStatDivider: { width: 1, height: 32 },
+  modalStatNum: { fontSize: 24, fontWeight: '800' },
   modalStatLabel: {
     fontSize: 11,
-    color: Colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -431,9 +379,5 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 14,
   },
-  modalStudyText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
+  modalStudyText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });
