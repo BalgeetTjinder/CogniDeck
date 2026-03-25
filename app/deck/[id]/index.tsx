@@ -2,9 +2,11 @@ import { useCallback, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { cacheDirectory, writeAsStringAsync } from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import { useTheme } from '../../../lib/theme';
 import { Deck, TopicWithStats } from '../../../lib/types';
-import { getDeck, getTopicsWithStats, deleteTopic, getDueCards, getHardCards } from '../../../lib/database';
+import { getDeck, getTopicsWithStats, deleteTopic, getDueCards, getHardCards, exportDeckToJson } from '../../../lib/database';
 import { KnowledgeGraph } from '../../../components/KnowledgeGraph';
 import { TopicItem } from '../../../components/TopicItem';
 import { EmptyState } from '../../../components/EmptyState';
@@ -150,13 +152,32 @@ export default function DeckScreen() {
           </Pressable>
         </View>
 
-        <Pressable
-          style={[styles.editBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
-          onPress={() => router.push(`/deck/${deckId}/edit`)}
-        >
-          <Ionicons name="settings-outline" size={18} color={colors.textMuted} />
-          <Text style={[styles.editBtnText, { color: colors.textMuted }]}>Настройки колоды</Text>
-        </Pressable>
+        <View style={styles.bottomActions}>
+          <Pressable
+            style={[styles.bottomBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            onPress={async () => {
+              try {
+                const json = await exportDeckToJson(deckId);
+                const fileName = `${deck.title.replace(/[^a-zA-Zа-яА-Я0-9]/g, '_')}.json`;
+                const path = cacheDirectory + fileName;
+                await writeAsStringAsync(path, JSON.stringify(json, null, 2));
+                await Sharing.shareAsync(path, { mimeType: 'application/json', dialogTitle: 'Экспорт колоды' });
+              } catch (e) {
+                Alert.alert('Ошибка', 'Не удалось экспортировать колоду');
+              }
+            }}
+          >
+            <Ionicons name="share-outline" size={18} color={colors.accent} />
+            <Text style={[styles.bottomBtnText, { color: colors.accent }]}>Экспорт</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.bottomBtn, { flex: 2, backgroundColor: colors.surface, borderColor: colors.border }]}
+            onPress={() => router.push(`/deck/${deckId}/edit`)}
+          >
+            <Ionicons name="settings-outline" size={18} color={colors.textMuted} />
+            <Text style={[styles.bottomBtnText, { color: colors.textMuted }]}>Настройки колоды</Text>
+          </Pressable>
+        </View>
 
         {/* Topics list */}
         <View style={styles.topicsSection}>
@@ -232,7 +253,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   actionText: { fontSize: 11, fontWeight: '600' },
-  editBtn: {
+  bottomActions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 20,
+  },
+  bottomBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -240,9 +267,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    marginBottom: 20,
   },
-  editBtnText: { fontSize: 13, fontWeight: '500' },
+  bottomBtnText: { fontSize: 13, fontWeight: '500' },
   topicsSection: { gap: 8 },
   sectionTitle: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
 });

@@ -253,16 +253,12 @@ export function KnowledgeGraph({ topics, deckColor, onStudyTopic, compact }: Kno
             {selected && (
               <>
                 <View style={styles.modalHeader}>
-                  <View style={[styles.modalGlow, { backgroundColor: selected.glowColor }]} />
-                  <View style={[styles.modalDot, { backgroundColor: selected.color }]} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.modalTitle, { color: colors.text }]}>
-                      {topics.find(t => t.id === selected.topicId)?.title ?? ''}
-                    </Text>
-                    {selected.type === 'subtopic' && (
-                      <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>{selected.label}</Text>
-                    )}
-                  </View>
+                  <Text style={[styles.modalTitle, { color: colors.text }]}>
+                    {topics.find(t => t.id === selected.topicId)?.title ?? ''}
+                  </Text>
+                  {selected.type === 'subtopic' && (
+                    <Text style={[styles.modalSubtitle, { color: colors.textSecondary }]}>{selected.label}</Text>
+                  )}
                 </View>
 
                 <View style={[styles.modalStats, { backgroundColor: colors.backgroundLight }]}>
@@ -341,20 +337,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
     marginBottom: 20,
   },
-  modalGlow: {
-    position: 'absolute',
-    left: -8, top: -8,
-    width: 40, height: 40,
-    borderRadius: 20, opacity: 0.5,
-  },
-  modalDot: { width: 14, height: 14, borderRadius: 7 },
-  modalTitle: { fontSize: 17, fontWeight: '700' },
-  modalSubtitle: { fontSize: 13, marginTop: 2 },
+  modalTitle: { fontSize: 18, fontWeight: '700' },
+  modalSubtitle: { fontSize: 13, marginTop: 4 },
   modalStats: {
     flexDirection: 'row',
     justifyContent: 'space-around',

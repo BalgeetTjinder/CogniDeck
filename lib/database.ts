@@ -495,6 +495,75 @@ export async function setSetting(key: string, value: string): Promise<void> {
 
 // ── Counts for notifications ──
 
+// ── Export / Import deck as JSON ──
+
+export async function exportDeckToJson(deckId: number): Promise<object> {
+  const database = await getDatabase();
+  const deck = await database.getFirstAsync<Deck>('SELECT * FROM decks WHERE id = ?', [deckId]);
+  if (!deck) throw new Error('Deck not found');
+
+  const topics = await database.getAllAsync<Topic>(
+    'SELECT * FROM topics WHERE deck_id = ? ORDER BY created_at', [deckId]
+  );
+
+  const result: any = {
+    _format: 'cognideck_v1',
+    title: deck.title,
+    color: deck.color,
+    topics: [],
+  };
+
+  for (const topic of topics) {
+    const subtopics = await database.getAllAsync<Subtopic>(
+      'SELECT * FROM subtopics WHERE topic_id = ? ORDER BY created_at', [topic.id]
+    );
+
+    const topicData: any = { title: topic.title, subtopics: [] };
+
+    for (const sub of subtopics) {
+      const cards = await database.getAllAsync<Card>(
+        'SELECT question, answer, hint FROM cards WHERE subtopic_id = ? ORDER BY created_at', [sub.id]
+      );
+      topicData.subtopics.push({
+        title: sub.title,
+        cards: cards.map(c => ({
+          question: c.question,
+          answer: c.answer,
+          ...(c.hint ? { hint: c.hint } : {}),
+        })),
+      });
+    }
+    result.topics.push(topicData);
+  }
+
+  return result;
+}
+
+export async function importDeckFromJson(data: any): Promise<number> {
+  if (data._format !== 'cognideck_v1') throw new Error('Неверный формат файла');
+  if (!data.title || !Array.isArray(data.topics)) throw new Error('Повреждённые данные');
+
+  const deckId = await createDeck(data.title, data.color || '#6366F1');
+
+  for (const topic of data.topics) {
+    if (!topic.title) continue;
+    const topicId = await createTopic(deckId, topic.title);
+
+    for (const sub of topic.subtopics || []) {
+      if (!sub.title) continue;
+      const subId = await createSubtopic(topicId, sub.title);
+
+      for (const card of sub.cards || []) {
+        if (card.question && card.answer) {
+          await createCard(subId, card.question, card.answer, card.hint);
+        }
+      }
+    }
+  }
+
+  return deckId;
+}
+
 export async function getTotalDueToday(): Promise<number> {
   const database = await getDatabase();
   const today = todayString();
